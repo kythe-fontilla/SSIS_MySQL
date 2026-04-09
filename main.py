@@ -683,6 +683,18 @@ class MainWindow(QMainWindow):
         self.center_window()
 
         self.db_manager = DatabaseManager()
+        result = self.db_manager._test_connection()
+        if result != True:
+            QMessageBox.critical(
+                None,
+                "Database Connection Error",
+                f"Could not connect to MySQL.\n\n"
+                f"Please make sure XAMPP MySQL is running.\n\n"
+                f"Error: {result[1]}"
+            )
+            sys.exit(1)
+
+        self.db_manager = DatabaseManager()
 
         self.resize(1100, 610)
 

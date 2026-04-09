@@ -8,9 +8,19 @@ class DatabaseManager:
 
     def __init__(self):
         self.config = DB_CONFIG
+        self._test_connection()
 
     def _get_connection(self):
         return mysql.connector.connect(**self.config)
+
+    def _test_connection(self):
+        try:
+            conn = self._get_connection()
+            conn.close()
+            print("Connected to MySQL successfully.")
+            return True
+        except Error as e:
+            return False, str(e)
 
 
     # ========== STUDENT OPERATIONS ==========
