@@ -8,25 +8,17 @@ class DatabaseManager:
 
     def __init__(self):
         self.config = DB_CONFIG
-        self._test_connection()
 
     def _get_connection(self):
         return mysql.connector.connect(**self.config)
 
-    def _test_connection(self):
-        try:
-            conn = self._get_connection()
-            conn.close()
-            print("✅ Connected to MySQL successfully.")
-        except Error as e:
-            print(f"❌ MySQL connection failed: {e}")
 
     # ========== STUDENT OPERATIONS ==========
     def get_all_students(self):
         try:
             conn = self._get_connection()
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT id, firstname, lastname, program_code, year_level AS year, gender FROM students")
+            cursor.execute("SELECT id, firstname, lastname, program_code, year, gender FROM students")
             students = cursor.fetchall()
             cursor.close()
             conn.close()
@@ -43,10 +35,10 @@ class DatabaseManager:
                 SELECT 
                     s.id, s.firstname, s.lastname,
                     s.program_code,
-                    COALESCE(p.name, 'N/A') AS program_name,
-                    COALESCE(p.college_code, 'N/A') AS college_code,
-                    COALESCE(c.name, 'N/A') AS college_name,
-                    s.year_level AS year,
+                    COALESCE(p.name, 'NULL') AS program_name,
+                    COALESCE(p.college_code, 'NULL') AS college_code,
+                    COALESCE(c.name, 'NULL') AS college_name,
+                    s.year,
                     s.gender
                 FROM students s
                 LEFT JOIN programs p ON s.program_code = p.code
@@ -65,13 +57,13 @@ class DatabaseManager:
             conn = self._get_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO students (id, firstname, lastname, program_code, year_level, gender) "
+                "INSERT INTO students (id, firstname, lastname, program_code, year, gender) "
                 "VALUES (%s, %s, %s, %s, %s, %s)",
                 (
                     student_data['id'],
                     student_data['firstname'],
                     student_data['lastname'],
-                    student_data['program_code'] if student_data['program_code'] != 'N/A' else None,
+                    student_data['program_code'] if student_data['program_code'] != 'NULL' else None,
                     student_data['year'],
                     student_data['gender']
                 )
@@ -94,12 +86,12 @@ class DatabaseManager:
             search_id = original_id if original_id else student_data['id']
             cursor.execute(
                 "UPDATE students SET id=%s, firstname=%s, lastname=%s, "
-                "program_code=%s, year_level=%s, gender=%s WHERE id=%s",
+                "program_code=%s, year=%s, gender=%s WHERE id=%s",
                 (
                     student_data['id'],
                     student_data['firstname'],
                     student_data['lastname'],
-                    student_data['program_code'] if student_data['program_code'] != 'N/A' else None,
+                    student_data['program_code'] if student_data['program_code'] != 'NULL' else None,
                     student_data['year'],
                     student_data['gender'],
                     search_id
@@ -149,12 +141,6 @@ class DatabaseManager:
             print(f"Error fetching programs: {e}")
             return []
 
-    def get_programs_cached(self):
-        return self.get_all_programs()
-
-    def get_colleges_cached(self):
-        return self.get_all_colleges()
-
     def get_program_by_code(self, code):
         try:
             conn = self._get_connection()
@@ -181,7 +167,7 @@ class DatabaseManager:
             cursor.execute(
                 "INSERT INTO programs (code, name, college_code) VALUES (%s, %s, %s)",
                 (program_data['code'], program_data['name'],
-                 program_data['college'] if program_data['college'] != 'N/A' else None)
+                 program_data['college'] if program_data['college'] != 'NULL' else None)
             )
             conn.commit()
             cursor.close()
@@ -203,7 +189,7 @@ class DatabaseManager:
             cursor.execute(
                 "UPDATE programs SET code=%s, name=%s, college_code=%s WHERE code=%s",
                 (program_data['code'], program_data['name'],
-                 program_data['college'] if program_data['college'] != 'N/A' else None,
+                 program_data['college'] if program_data['college'] != 'NULL' else None,
                  search_code)
             )
             conn.commit()
@@ -314,6 +300,3 @@ class DatabaseManager:
             return True, f"College {college['name']} ({college_code}) deleted successfully!"
         except Error as e:
             return False, f"Error deleting college: {str(e)}"
-
-    def _refresh_cache(self):
-        pass  # No cache needed with MySQL — queries are always live

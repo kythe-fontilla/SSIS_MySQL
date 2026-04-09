@@ -208,7 +208,7 @@ class AddStudentDialog(QDialog):
                     return False
         
         # Modify program validation to accept 'N/A'
-        if student_data['program_code'] == 'N/A':
+        if student_data['program_code']:
             reply = QMessageBox.warning(
                 self, "No Program Selected",
                 "You are setting this student to have no program. Continue?",
@@ -498,7 +498,7 @@ class AddProgramDialog(QDialog):
         self.setModal(True)
         self.setMinimumWidth(400)
 
-        self.colleges = self.db_manager.get_colleges_cached()
+        self.colleges = self.db_manager.get_all_colleges()
         
         self.setup_ui()
         
@@ -1174,9 +1174,6 @@ class MainWindow(QMainWindow):
     def edit_college(self, college):
         dialog = AddCollegeDialog(self.db_manager, self, college_data=college)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.db_manager._programs_cache = None
-            self.db_manager._colleges_cache = None
-
             self.load_colleges_table()
             self.load_programs_table()
             self.load_students_table()
@@ -1254,7 +1251,6 @@ class MainWindow(QMainWindow):
         table.setRowCount(0)
         
         if refresh:
-            self.db_manager._programs_cache = None
             self.all_programs = self.db_manager.get_all_programs()
 
         search_text = self.current_programs_search_text.lower().strip()
@@ -1402,7 +1398,6 @@ class MainWindow(QMainWindow):
     def edit_program(self, program):
         dialog = AddProgramDialog(self.db_manager, self, program_data=program)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.db_manager._refresh_cache()
             self.load_programs_table()
             self.load_students_table()
 
