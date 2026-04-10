@@ -46,7 +46,7 @@ class DatabaseManager:
 
     def get_all_students(self):
         success, result = self._execute_query(
-            "SELECT id, firstname, lastname, program_code, year_level AS year, gender FROM students",
+            "SELECT id, firstname, lastname, program_code, year, gender FROM students",
             fetch='all'
         )
         return result if success else []
@@ -59,7 +59,7 @@ class DatabaseManager:
                 COALESCE(p.name, 'NULL') AS program_name,
                 COALESCE(p.college_code, 'NULL') AS college_code,
                 COALESCE(c.name, 'NULL') AS college_name,
-                s.year_level AS year,
+                s.year,
                 s.gender
             FROM students s
             LEFT JOIN programs p ON s.program_code = p.code
@@ -69,7 +69,7 @@ class DatabaseManager:
 
     def add_student(self, student_data):
         success, result = self._execute_query(
-            "INSERT INTO students (id, firstname, lastname, program_code, year_level, gender) "
+            "INSERT INTO students (id, firstname, lastname, program_code, year, gender) "
             "VALUES (%s, %s, %s, %s, %s, %s)",
             (
                 student_data['id'],
@@ -91,7 +91,7 @@ class DatabaseManager:
         search_id = original_id if original_id else student_data['id']
         success, result = self._execute_query(
             "UPDATE students SET id=%s, firstname=%s, lastname=%s, "
-            "program_code=%s, year_level=%s, gender=%s WHERE id=%s",
+            "program_code=%s, year=%s, gender=%s WHERE id=%s",
             (
                 student_data['id'],
                 student_data['firstname'],
@@ -157,6 +157,13 @@ class DatabaseManager:
                 return False, f"Program code {program_data['code']} already exists"
             return False, f"Database error: {result}"
         return True, f"Program {program_data['code']} added successfully"
+    
+    def program_exists(self, program_code):
+        return self.get_program_by_code(program_code) is not None
+
+    def get_program_display_list(self):
+        programs = self.get_all_programs()
+        return DataLookup.get_program_display_list(programs)
 
     def update_program(self, program_data, old_code=None):
         search_code = old_code if old_code else program_data['code']
